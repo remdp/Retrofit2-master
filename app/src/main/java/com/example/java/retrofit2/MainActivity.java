@@ -2,8 +2,10 @@ package com.example.java.retrofit2;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +13,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,12 +31,13 @@ import java.util.concurrent.TimeUnit;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
-public class MainActivity extends AppCompatActivity implements ReposView {
+public class MainActivity extends AppCompatActivity implements ReposView ,  View.OnClickListener {
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private ReposPresenter reposPresenter = new ReposPresenter();
     private Observable<CharSequence> queryObservable = null;
+    private CustomTabsIntent.Builder build;
 
 
     @Override
@@ -45,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements ReposView {
         reposPresenter.onAttach(this);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        String[] myDataset = getDataSet();
+        //String[] myDataset = getDataSet();
 
         // если мы уверены, что изменения в контенте не изменят размер layout-а RecyclerView
         // передаем параметр true - это увеличивает производительность
@@ -90,33 +94,23 @@ public class MainActivity extends AppCompatActivity implements ReposView {
         return super.onOptionsItemSelected(item);
     }
 
-    private String[] getDataSet() {
-
-        String[] mDataSet = new String[10];
-        for (int i = 0; i < 10; i++) {
-            mDataSet[i] = "item" + i;
-        }
-        return mDataSet;
-    }
-
     @Override
     public void showRepos(List<Repo> list) {
-       String[] mDataSet = new String[list.size()];
+       //String[] mDataSet = new String[list.size()];
         //for (int i = 0; i < list.size(); i++) {
 //           mDataSet[0] = "a";
 //        mDataSet[1] = "s";
 //        mDataSet[2] = "d";
-        for(Repo repo : list){
-            //Toast.makeText(getContex(), repo.getName(), Toast.LENGTH_SHORT).show();
-            mDataSet[list.indexOf(repo)] = repo.getName();
-        }
+//        for(Repo repo : list){
+//            //Toast.makeText(getContex(), repo.getName(), Toast.LENGTH_SHORT).show();
+//            mDataSet[list.indexOf(repo)] = repo.getName();
+//        }
         //}
-
-        mAdapter = new RecyclerAdapter(mDataSet);
+        mAdapter = new RecyclerAdapter(list, this);
         mRecyclerView.setAdapter(mAdapter);
 
-    }
 
+    }
     @Override
     public Context getContex() {
         return this;
@@ -125,6 +119,19 @@ public class MainActivity extends AppCompatActivity implements ReposView {
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
         reposPresenter.onDetach();
+    }
+
+    @Override
+    public void onClick(View view) {
+        RecyclerAdapter.MyViewHolder holder = (RecyclerAdapter.MyViewHolder) mRecyclerView.findContainingViewHolder(view);
+        if (holder == null) return;
+      //  Toast.makeText(this, holder.getRepo().getUrl(), Toast.LENGTH_SHORT).show();
+
+        String url = holder.getRepo().getHtmlUrl();
+        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+        CustomTabsIntent customTabsIntent = builder.build();
+        customTabsIntent.launchUrl(this, Uri.parse(url));
     }
 }
