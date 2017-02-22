@@ -1,11 +1,16 @@
 package com.example.java.retrofit2;
 
 import android.app.SearchManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.customtabs.CustomTabsClient;
 import android.support.customtabs.CustomTabsIntent;
+import android.support.customtabs.CustomTabsServiceConnection;
+import android.support.customtabs.CustomTabsSession;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -39,6 +44,13 @@ public class MainActivity extends AppCompatActivity implements ReposView ,  View
     private Observable<CharSequence> queryObservable = null;
     private CustomTabsIntent.Builder build;
 
+    private static final String EXTRA_CUSTOM_TABS_SESSION = "android.support.customtabs.extra.SESSION";
+    final String CUSTOM_TAB_PACKAGE_NAME = "com.android.chrome";
+    CustomTabsServiceConnection mCustomTabsServiceConnection = null;
+    CustomTabsSession mCustomTabsSession = null;
+    CustomTabsIntent mCustomTabsIntent;
+    CustomTabsClient mCustomTabsClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +69,23 @@ public class MainActivity extends AppCompatActivity implements ReposView ,  View
         // используем linear layout manager
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        // создаем адаптер
-       // mAdapter = new RecyclerAdapter(myDataset);
-        //mRecyclerView.setAdapter(mAdapter);
+
+        mCustomTabsServiceConnection = new CustomTabsServiceConnection() {
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+                mCustomTabsClient= null;
+            }
+
+            @Override
+            public void onCustomTabsServiceConnected(ComponentName componentName, CustomTabsClient customTabsClient) {
+                mCustomTabsClient = customTabsClient;
+                mCustomTabsClient.warmup(0L);
+                mCustomTabsSession = mCustomTabsClient.newSession(null);
+            }
+        };
+        CustomTabsClient.bindCustomTabsService(this, CUSTOM_TAB_PACKAGE_NAME, mCustomTabsServiceConnection);
+
+
     }
 
     @Override
@@ -96,20 +122,9 @@ public class MainActivity extends AppCompatActivity implements ReposView ,  View
 
     @Override
     public void showRepos(List<Repo> list) {
-       //String[] mDataSet = new String[list.size()];
-        //for (int i = 0; i < list.size(); i++) {
-//           mDataSet[0] = "a";
-//        mDataSet[1] = "s";
-//        mDataSet[2] = "d";
-//        for(Repo repo : list){
-//            //Toast.makeText(getContex(), repo.getName(), Toast.LENGTH_SHORT).show();
-//            mDataSet[list.indexOf(repo)] = repo.getName();
-//        }
-        //}
         mAdapter = new RecyclerAdapter(list, this);
         mRecyclerView.setAdapter(mAdapter);
-
-
+     //   mAdapter.se
     }
     @Override
     public Context getContex() {
@@ -130,8 +145,15 @@ public class MainActivity extends AppCompatActivity implements ReposView ,  View
       //  Toast.makeText(this, holder.getRepo().getUrl(), Toast.LENGTH_SHORT).show();
 
         String url = holder.getRepo().getHtmlUrl();
-        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-        CustomTabsIntent customTabsIntent = builder.build();
-        customTabsIntent.launchUrl(this, Uri.parse(url));
+//        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+//        CustomTabsIntent customTabsIntent = builder.build();
+//       customTabsIntent.launchUrl(this, Uri.parse(url));
+
+
+        mCustomTabsIntent = new CustomTabsIntent.Builder(mCustomTabsSession)
+                .setShowTitle(true)
+                .build();
+
+        mCustomTabsIntent.launchUrl(this, Uri.parse(url));
     }
 }
