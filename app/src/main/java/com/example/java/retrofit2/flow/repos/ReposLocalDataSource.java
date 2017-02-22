@@ -5,6 +5,7 @@ import com.example.java.retrofit2.model.Repo;
 
 import java.util.List;
 
+import io.realm.Case;
 import io.realm.RealmResults;
 import rx.Single;
 
@@ -17,7 +18,7 @@ public class ReposLocalDataSource extends BaseLocalDataSource implements ReposDa
     public Single<List<Repo>> getRepos(String user) {
         return Single.create(subscriber ->{
             realm.executeTransaction(innerRealm ->{
-               RealmResults list = innerRealm.where(Repo.class).equalTo("name", user)
+               RealmResults list = innerRealm.where(Repo.class).equalTo("owner.login", user, Case.INSENSITIVE)
                        .findAll();
                 if(list == null) {
                     subscriber.onError(new Exception("vse ploho"));

@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements ReposView ,  View
         mAdapter = new RecyclerAdapter(list, this);
         mRecyclerView.setAdapter(mAdapter);
      //   mAdapter.se
+        //рр
     }
     @Override
     public Context getContex() {
